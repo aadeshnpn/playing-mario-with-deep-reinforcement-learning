@@ -33,6 +33,9 @@ class PrioritizedReplayQueue(object):
         # as the secondary comparison (after priority) prevents the comparison
         # of numpy arrays altogether
         self.counter = itertools.count()
+        # create alpha and L_infiniti norm variables
+        self.alpha = 1.0
+        self.l_inf = 0.0
 
     def __repr__(self) -> str:
         """Return an executable string representation of priority queue."""
@@ -68,6 +71,11 @@ class PrioritizedReplayQueue(object):
         """
         # get the unique count for this item
         count = next(self.counter)
+        # update the L infinity norm
+        if priority > self.l_inf:
+            self.l_inf = priority
+        # reset alpha based on the normalized priority
+        self.alpha = priority / self.l_inf
         # if the heap has arrived at capacity, use push pop to add new items
         if len(self.heap) == self.size:
             heappushpop(self.heap, (priority, count, (s, a, r, d, s2)))
@@ -75,15 +83,15 @@ class PrioritizedReplayQueue(object):
         else:
             heappush(self.heap, (priority, count, (s, a, r, d, s2)))
 
-    def sample(self, size: int=32) -> bool:
+    def _sample_priority(self, size: int) -> tuple:
         """
-        Return a random sample of items from the queue.
+        Return a sample of items from the queue using priority.
 
         Args:
             size: the number of items to sample and return
 
         Returns:
-            A random sample from the queue sampled uniformly
+            A sample from the queue sampled based on priority
 
         """
         # extract a sample from the heap (priorities are in increasing order)
@@ -112,6 +120,57 @@ class PrioritizedReplayQueue(object):
             np.array(d, dtype=np.bool),
             np.array(s2),
         )
+
+    def _sample_uniform(self, size: int) -> tuple:
+        """
+        Return a uniform random sample of items from the queue.
+
+        Args:
+            size: the number of items to sample and return
+
+        Returns:
+            A random sample from the queue sampled uniformly
+
+        """
+        # initialize lists for each component of the batch
+        s = [None] * size
+        a = [None] * size
+        r = [None] * size
+        d = [None] * size
+        s2 = [None] * size
+        # iterate over the indexes and copy references to the arrays
+        for batch, sample in enumerate(np.random.randint(0, self.top, size)):
+            _, _, experience = self.heap[sample]
+            _s, _a, _r, _d, _s2 = experience
+            s[batch] = np.array(_s, copy=False)
+            a[batch] = _a
+            r[batch] = _r
+            d[batch] = _d
+            s2[batch] = np.array(_s2, copy=False)
+        # convert the lists to arrays for returning for training
+        return (
+            np.array(s),
+            np.array(a, dtype=np.uint8),
+            np.array(r, dtype=np.int8),
+            np.array(d, dtype=np.bool),
+            np.array(s2),
+        )
+
+    def sample(self, size: int=32) -> tuple:
+        """
+        Return a sample of data from the queue.
+
+        Args:
+            size: the size of the sample to return
+
+        Returns:
+            a batch of data sampled depending on alpha
+        """
+        # draw a random number and check if it falls below alpha
+        if np.random.random() < self.alpha:
+            return self._sample_priority(size)
+
+        return self._sample_uniform(size)
 
 
 # explicitly define the outward facing API of this module
