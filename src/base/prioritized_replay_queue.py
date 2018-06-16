@@ -33,7 +33,7 @@ class PrioritizedReplayQueue(object):
         # as the secondary comparison (after priority) prevents the comparison
         # of numpy arrays altogether
         self.counter = itertools.count()
-        # create alpha and L_infiniti norm variables
+        # create alpha and L infiniti norm variables
         self.alpha = 1.0
         self.l_inf = 0.0
 
@@ -72,10 +72,10 @@ class PrioritizedReplayQueue(object):
         # get the unique count for this item
         count = next(self.counter)
         # update the L infinity norm
-        if priority > self.l_inf:
-            self.l_inf = priority
+        if abs(priority) > self.l_inf:
+            self.l_inf = abs(priority)
         # reset alpha based on the normalized priority
-        self.alpha = priority / self.l_inf
+        self.alpha = abs(priority) / self.l_inf
         # if the heap has arrived at capacity, use push pop to add new items
         if len(self.heap) == self.size:
             heappushpop(self.heap, (priority, count, (s, a, r, d, s2)))
