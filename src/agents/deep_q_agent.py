@@ -39,7 +39,7 @@ class DeepQAgent(Agent):
         env: gym.Env,
         render_mode: str=None,
         replay_memory_size: int=750000,
-        prioritized_experience_replay: bool=False,
+        prioritized_experience_replay: bool=True,
         discount_factor: float=0.99,
         update_frequency: int=4,
         optimizer: Optimizer=Adam(lr=2e-5),
