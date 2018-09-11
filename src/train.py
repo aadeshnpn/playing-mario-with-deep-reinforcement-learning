@@ -37,7 +37,7 @@ def train(env_id: str, output_dir: str, monitor: bool=False) -> None:
     monitor_dir = '{}/monitor_train'.format(output_dir) if monitor else None
     env = setup_env(env_id, monitor_dir)
     # build the agent
-    agent = DeepQAgent(env, replay_memory_size=int(7.5e5))
+    agent = DeepQAgent(env, replay_memory_size=int(2.5e5))
     # write some info about the agent's hyperparameters to disk
     with open('{}/agent.py'.format(output_dir), 'w') as agent_file:
         agent_file.write(repr(agent))
