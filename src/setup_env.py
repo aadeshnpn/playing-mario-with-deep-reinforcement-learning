@@ -1,7 +1,7 @@
 """A method to setup an environment based on its string ID."""
 import gym
 from nes_py.wrappers import BinarySpaceToDiscreteSpaceEnv, wrap as nes_py_wrap
-from gym_super_mario_bros.actions import SIMPLE_MOVEMENT
+from gym_super_mario_bros.actions import SIMPLE_MOVEMENT, COMPLEX_MOVEMENT
 from src.environment.atari import build_atari_environment
 
 
@@ -24,8 +24,17 @@ def setup_env(env_id: str, monitor_dir: str=None) -> gym.Env:
     elif 'SuperMarioBros' in env_id:
         import gym_super_mario_bros
         env = gym_super_mario_bros.make(env_id)
-        env = BinarySpaceToDiscreteSpaceEnv(env, SIMPLE_MOVEMENT)
+        def hack(method):
+            def hacked():
+                env.unwrapped._write_mem(0x0756, 2)
+                return method()
+            return hacked
+        env.unwrapped._did_reset = hack(env.unwrapped._did_reset)
+
+        # env = BinarySpaceToDiscreteSpaceEnv(env, SIMPLE_MOVEMENT)
+        env = BinarySpaceToDiscreteSpaceEnv(env, COMPLEX_MOVEMENT)
         env = nes_py_wrap(env)
+
     else:
         env = build_atari_environment(env_id)
 
