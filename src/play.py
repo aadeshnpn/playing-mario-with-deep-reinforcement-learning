@@ -61,14 +61,16 @@ def play(results_dir: str, monitor: bool=False) -> None:
 
     # these are long to import and train is only ever called once during
     # an execution life-cycle. import here to save early execution time
-    from src.agents import DeepQAgent
+    from src.agents import DeepQAgentRes1
+    #from src.agents import DeepQAgent
 
     # build the environment
     monitor_dir = '{}/monitor_play'.format(results_dir) if monitor else None
     env = setup_env(env_id, monitor_dir)
     # build the agent without any replay memory since we're just playing, load
     # the trained weights, and play some games
-    agent = DeepQAgent(env, replay_memory_size=0)
+    agent = DeepQAgentRes1(env, replay_memory_size=0)
+    #agent = DeepQAgent(env, replay_memory_size=0)
     agent.model.load_weights(weights_file)
     agent.target_model.load_weights(weights_file)
 
